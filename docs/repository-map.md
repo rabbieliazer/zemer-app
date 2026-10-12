@@ -54,19 +54,19 @@ The following inventory is generated from repository files outside `.git`, `.gra
 
 ### Counts
 
-- Files counted: `1385`
+- Files counted: `1388`
 - By extension:
-  - `.kt`: `896`
+  - `.kt`: `897`
   - `.xml`: `196`
   - `.mjs`: `110`
   - `.md`: `64`
   - `.json`: `50`
   - `.webp`: `15`
+  - `.yml`: `7`
   - `.html`: `6`
-  - `.yml`: `6`
   - `[none]`: `6`
+  - `.kts`: `5`
   - `.sh`: `5`
-  - `.kts`: `4`
   - `.properties`: `3`
   - `.txt`: `3`
   - `.dm`: `2`
@@ -95,6 +95,7 @@ The following inventory is generated from repository files outside `.git`, `.gra
 | `.github/workflows/regression.yml` | 84 lines | `.yml` |
 | `.github/workflows/release-build.yml` | 166 lines | `.yml` |
 | `.github/workflows/ui-audit.yml` | 55 lines | `.yml` |
+| `.github/workflows/windows-build.yml` | 41 lines | `.yml` |
 | `.gitignore` | 117 lines | `[none]` |
 | `.gitmodules` | 3 lines | `[none]` |
 | `AGENTS.md` | 1015 lines | `.md` |
@@ -1230,14 +1231,14 @@ The following inventory is generated from repository files outside `.git`, `.gra
 | `docs/recognize_music/03-entry-points-and-ui.md` | 80 lines | `.md` |
 | `docs/recognize_music/README.md` | 73 lines | `.md` |
 | `docs/reference/kotlin-files.md` | 909 lines | `.md` |
-| `docs/reference/non-kotlin-files.md` | 438 lines | `.md` |
+| `docs/reference/non-kotlin-files.md` | 440 lines | `.md` |
 | `docs/reference/resource-index.md` | 317 lines | `.md` |
 | `docs/remote_cipher_config/01-concepts-and-format.md` | 135 lines | `.md` |
 | `docs/remote_cipher_config/02-runtime-store.md` | 94 lines | `.md` |
 | `docs/remote_cipher_config/03-extraction-and-self-heal.md` | 102 lines | `.md` |
 | `docs/remote_cipher_config/04-operations.md` | 121 lines | `.md` |
 | `docs/remote_cipher_config/README.md` | 60 lines | `.md` |
-| `docs/repository-map.md` | 1476 lines | `.md` |
+| `docs/repository-map.md` | 1479 lines | `.md` |
 | `docs/sabr/README.md` | 369 lines | `.md` |
 | `docs/stations/README.md` | 67 lines | `.md` |
 | `docs/status/README.md` | 93 lines | `.md` |
@@ -1355,7 +1356,7 @@ The following inventory is generated from repository files outside `.git`, `.gra
 | `scripts/ui-audit-baseline.tsv` | 14 lines | `.tsv` |
 | `scripts/ui-audit.sh` | 255 lines | `.sh` |
 | `scripts/ui-strings-scan.py` | 96 lines | `.py` |
-| `settings.gradle.kts` | 33 lines | `.kts` |
+| `settings.gradle.kts` | 34 lines | `.kts` |
 | `tests/INVESTIGATION.md` | 226 lines | `.md` |
 | `tests/MWEB-INVESTIGATION.md` | 47 lines | `.md` |
 | `tests/README.md` | 134 lines | `.md` |
@@ -1474,3 +1475,5 @@ The following inventory is generated from repository files outside `.git`, `.gra
 | `tests/watchtime-cpn-stream.mjs` | 110 lines | `.mjs` |
 | `tests/web-creator-stream.mjs` | 142 lines | `.mjs` |
 | `tests/web-remix-stream.mjs` | 278 lines | `.mjs` |
+| `windows-desktop/build.gradle.kts` | 41 lines | `.kts` |
+| `windows-desktop/src/main/kotlin/com/jtech/zemer/windows/Main.kt` | 258 lines | `.kt` |

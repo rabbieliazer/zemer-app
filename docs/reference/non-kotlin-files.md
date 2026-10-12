@@ -1,6 +1,6 @@
 # Non-Kotlin file reference
 
-Every tracked non-Kotlin path outside `docs/` is listed. Text files report line counts; binary files report byte counts; gitlinks are recorded as non-file tracked paths. Total paths: `432`.
+Every tracked non-Kotlin path outside `docs/` is listed. Text files report line counts; binary files report byte counts; gitlinks are recorded as non-file tracked paths. Total paths: `434`.
 
 | Path | Size/status | Type metadata |
 | --- | ---: | --- |
@@ -10,6 +10,7 @@ Every tracked non-Kotlin path outside `docs/` is listed. Text files report line 
 | `.github/workflows/regression.yml` | 84 lines | text `.yml` |
 | `.github/workflows/release-build.yml` | 166 lines | text `.yml` |
 | `.github/workflows/ui-audit.yml` | 55 lines | text `.yml` |
+| `.github/workflows/windows-build.yml` | 41 lines | text `.yml` |
 | `.gitignore` | 117 lines | text `[none]` |
 | `.gitmodules` | 3 lines | text `[none]` |
 | `AGENTS.md` | 1015 lines | text `.md` |
@@ -317,7 +318,7 @@ Every tracked non-Kotlin path outside `docs/` is listed. Text files report line 
 | `scripts/ui-audit-baseline.tsv` | 14 lines | text `.tsv` |
 | `scripts/ui-audit.sh` | 255 lines | text `.sh` |
 | `scripts/ui-strings-scan.py` | 96 lines | text `.py` |
-| `settings.gradle.kts` | 33 lines | text `.kts` |
+| `settings.gradle.kts` | 34 lines | text `.kts` |
 | `tests/INVESTIGATION.md` | 226 lines | text `.md` |
 | `tests/MWEB-INVESTIGATION.md` | 47 lines | text `.md` |
 | `tests/README.md` | 134 lines | text `.md` |
@@ -436,3 +437,4 @@ Every tracked non-Kotlin path outside `docs/` is listed. Text files report line 
 | `tests/watchtime-cpn-stream.mjs` | 110 lines | text `.mjs` |
 | `tests/web-creator-stream.mjs` | 142 lines | text `.mjs` |
 | `tests/web-remix-stream.mjs` | 278 lines | text `.mjs` |
+| `windows-desktop/build.gradle.kts` | 41 lines | text `.kts`; plugins `jvm, org.jetbrains.compose` |
