@@ -8,6 +8,7 @@ class DesktopAppEnvironment(private val baseDir: File = File(System.getProperty(
     val playback: PlaybackBackend = FfmpegPlaybackBackend()
     val storage: StorageBackend = DesktopStorageStub()
     val resolver: StreamingResolver = DesktopNoopResolver(File("."))
+    val playableUrlProvider: PlayableUrlProvider = FileBackedPlayableUrlProvider(File("."))
 
     init {
         baseDir.mkdirs()
