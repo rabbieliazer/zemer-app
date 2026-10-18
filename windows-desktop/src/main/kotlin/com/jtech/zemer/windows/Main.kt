@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import com.jtech.zemer.desktopcore.getDefaultPlayback
 
 private data class Track(
     val title: String,
@@ -78,6 +80,10 @@ private fun ZemerDesktopApp() {
     MaterialTheme(colorScheme = colorScheme) {
         var selectedTab by remember { mutableStateOf("Home") }
         var searchText by remember { mutableStateOf("") }
+
+        // Playback backend (stub for now)
+        val playback = remember { getDefaultPlayback() }
+        var playing by remember { mutableStateOf(playback.isPlaying) }
 
         val filteredTracks = remember(searchText) {
             if (searchText.isBlank()) sampleTracks else sampleTracks.filter {
@@ -122,6 +128,28 @@ private fun ZemerDesktopApp() {
                     text = "Zemer",
                     style = MaterialTheme.typography.headlineMedium
                 )
+
+                // Simple playback controls for the prototype
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = {
+                        if (playback.isPlaying) {
+                            playback.pause()
+                            playing = false
+                        } else {
+                            // sample URL placeholder — replace with resolved stream URL
+                            playback.play("https://example.com/sample.mp3")
+                            playing = true
+                        }
+                    }) {
+                        Text(if (playing) "Pause" else "Play")
+                    }
+                    Button(onClick = {
+                        playback.stop()
+                        playing = false
+                    }) {
+                        Text("Stop")
+                    }
+                }
 
                 TabRow(selectedTabIndex = when (selectedTab) {
                     "Home" -> 0

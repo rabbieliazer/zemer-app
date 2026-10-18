@@ -25,6 +25,7 @@ rootProject.name = "Zemer"
 include(":app")
 include(":innertube")
 include(":windows-desktop")
+include(":desktop-core")
 
 // Cipher library (submodule)
 includeBuild("cipher") {
