@@ -48,21 +48,22 @@ import com.jtech.zemer.desktopcore.DesktopQueueStore
 import com.jtech.zemer.desktopcore.DesktopTrack
 
 fun main() = application {
+    val environment = remember { DesktopAppEnvironment() }
+    val queueStore = remember { DesktopQueueStore() }
+    val player = remember {
+        DesktopPlayerController(
+            queueStore = queueStore,
+            playback = environment.playback,
+            settings = environment.settings
+        )
+    }
+    val initialTracks = remember { environment.database.listTracks() }
+    queueStore.replace(initialTracks)
+
     Window(
         onCloseRequest = ::exitApplication,
         title = "Zemer Windows"
     ) {
-        val environment = remember { DesktopAppEnvironment() }
-        val queueStore = remember { DesktopQueueStore() }
-        val player = remember {
-            DesktopPlayerController(
-                queueStore = queueStore,
-                playback = environment.playback,
-                settings = environment.settings
-            )
-        }
-        val initialTracks = remember { environment.database.listTracks() }
-        queueStore.replace(initialTracks)
         ZemerDesktopApp(
             environment = environment,
             player = player,
@@ -90,19 +91,27 @@ private fun ZemerDesktopApp(
         var selectedTab by remember { mutableStateOf("Home") }
         var searchText by remember { mutableStateOf("") }
         var showSettings by remember { mutableStateOf(false) }
-        var trackList by remember { mutableStateOf(initialTracks) }
+        var queueItems by remember { mutableStateOf(queueStore.currentQueue()) }
         var playing by remember { mutableStateOf(false) }
         val settings = remember { environment.settings }
         var autoplay by remember { mutableStateOf(settings.getBoolean("autoplay", true)) }
 
-        val filteredTracks = remember(searchText, trackList) {
-            if (searchText.isBlank()) trackList else trackList.filter {
-                it.title.contains(searchText, ignoreCase = true)
-                    || it.artist.contains(searchText, ignoreCase = true)
-            }
+        val dbTracks = remember(searchText) {
+            if (searchText.isBlank()) initialTracks else environment.database.searchTracks(searchText)
         }
 
-        val queue = remember { queueStore.currentQueue() }
+        val activeRows = if (selectedTab == "Search") dbTracks else queueItems
+
+        val playTrack: (DesktopTrack) -> Unit = { track ->
+            player.playTrack(track)
+            queueItems = queueStore.currentQueue()
+            playing = true
+        }
+
+        val removeTrack: (DesktopTrack) -> Unit = { track ->
+            queueStore.remove(track.id)
+            queueItems = queueStore.currentQueue()
+        }
 
         Scaffold(
             bottomBar = {
@@ -146,10 +155,9 @@ private fun ZemerDesktopApp(
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = {
-                        val item = filteredTracks.firstOrNull()
+                        val item = activeRows.firstOrNull()
                         if (item != null) {
-                            player.playTrack(item)
-                            playing = true
+                            playTrack(item)
                         }
                     }) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -201,9 +209,9 @@ private fun ZemerDesktopApp(
                 }
 
                 when (selectedTab) {
-                    "Home" -> HomeContent(filteredTracks)
-                    "Search" -> SearchContent(filteredTracks)
-                    "Library" -> LibraryContent(queue)
+                    "Home" -> HomeContent(initialTracks, playTrack, removeTrack)
+                    "Search" -> SearchContent(dbTracks, playTrack, removeTrack)
+                    "Library" -> LibraryContent(queueItems, playTrack, removeTrack)
                 }
             }
         }
@@ -240,39 +248,41 @@ private fun DesktopSettingsCard(
 }
 
 @Composable
-private fun HomeContent(tracks: List<DesktopTrack>) {
+private fun HomeContent(
+    tracks: List<DesktopTrack>,
+    playTrack: (DesktopTrack) -> Unit,
+    removeTrack: (DesktopTrack) -> Unit
+) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { SpotlightCard() }
-        items(tracks) { track -> MusicRow(track) }
+        items(tracks) { track ->
+            MusicRow(track, playTrack, removeTrack)
+        }
     }
 }
 
 @Composable
-private fun SearchContent(tracks: List<DesktopTrack>) {
+private fun SearchContent(
+    tracks: List<DesktopTrack>,
+    playTrack: (DesktopTrack) -> Unit,
+    removeTrack: (DesktopTrack) -> Unit
+) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        items(tracks) { track -> MusicRow(track) }
+        items(tracks) { track ->
+            MusicRow(track, playTrack, removeTrack)
+        }
     }
 }
 
 @Composable
-private fun LibraryContent(queue: List<DesktopTrack>) {
+private fun LibraryContent(
+    queue: List<DesktopTrack>,
+    playTrack: (DesktopTrack) -> Unit,
+    removeTrack: (DesktopTrack) -> Unit
+) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         items(queue) { track ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(3.dp)
-                ) {
-                    Text(track.title, style = MaterialTheme.typography.titleMedium)
-                    Text(track.artist, style = MaterialTheme.typography.bodyMedium)
-                    Text(track.mood, style = MaterialTheme.typography.labelMedium)
-                }
-            }
+            QueueRow(track, playTrack, removeTrack)
         }
     }
 }
@@ -295,7 +305,11 @@ private fun SpotlightCard() {
 }
 
 @Composable
-private fun MusicRow(track: DesktopTrack) {
+private fun MusicRow(
+    track: DesktopTrack,
+    playTrack: (DesktopTrack) -> Unit,
+    removeTrack: (DesktopTrack) -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -317,7 +331,55 @@ private fun MusicRow(track: DesktopTrack) {
                 Text(track.title, style = MaterialTheme.typography.titleMedium)
                 Text(track.artist, style = MaterialTheme.typography.bodyMedium)
             }
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Button(onClick = { playTrack(track) }) {
+                    Text("Play")
+                }
+                Button(onClick = { removeTrack(track) }) {
+                    Text("Remove")
+                }
+            }
             Text(track.mood, style = MaterialTheme.typography.labelMedium)
+        }
+    }
+}
+
+@Composable
+private fun QueueRow(
+    track: DesktopTrack,
+    playTrack: (DesktopTrack) -> Unit,
+    removeTrack: (DesktopTrack) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(52.dp)
+                    .height(52.dp)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.18f))
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(track.title, style = MaterialTheme.typography.titleMedium)
+                Text(track.artist, style = MaterialTheme.typography.bodyMedium)
+                Text(track.mood, style = MaterialTheme.typography.labelMedium)
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Button(onClick = { playTrack(track) }) {
+                    Text("Play")
+                }
+                Button(onClick = { removeTrack(track) }) {
+                    Text("Drop")
+                }
+            }
         }
     }
 }

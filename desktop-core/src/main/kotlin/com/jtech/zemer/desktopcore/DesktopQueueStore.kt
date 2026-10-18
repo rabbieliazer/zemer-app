@@ -17,6 +17,16 @@ class DesktopQueueStore {
         queueRef.set(current)
     }
 
+    fun remove(itemId: Long) {
+        val current = queueRef.get().toMutableList()
+        val next = current.filterNot { it.id == itemId }
+        queueRef.set(next)
+    }
+
+    fun clear() {
+        queueRef.set(emptyList())
+    }
+
     fun next(): DesktopTrack? = queueRef.get().firstOrNull()
 
     fun currentQueue(): List<DesktopTrack> = queueRef.get()
