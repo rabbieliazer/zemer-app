@@ -17,4 +17,10 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.xerial:sqlite-jdbc:3.45.3.0")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.3")
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
