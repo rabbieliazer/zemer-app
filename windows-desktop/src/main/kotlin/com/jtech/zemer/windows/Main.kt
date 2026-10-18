@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
@@ -42,31 +43,41 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.jtech.zemer.desktopcore.DesktopAppEnvironment
+import com.jtech.zemer.desktopcore.DesktopPlayerController
+import com.jtech.zemer.desktopcore.DesktopQueueStore
 import com.jtech.zemer.desktopcore.DesktopTrack
-import java.io.File
-
-private data class Track(
-    val title: String,
-    val artist: String,
-    val mood: String,
-    val audioUrl: String = ""
-)
 
 fun main() = application {
-    val environment = remember { DesktopAppEnvironment() }
-    val tracks = remember { environment.database.listTracks() }
     Window(
         onCloseRequest = ::exitApplication,
         title = "Zemer Windows"
     ) {
-        ZemerDesktopApp(environment, tracks)
+        val environment = remember { DesktopAppEnvironment() }
+        val queueStore = remember { DesktopQueueStore() }
+        val player = remember {
+            DesktopPlayerController(
+                queueStore = queueStore,
+                playback = environment.playback,
+                settings = environment.settings
+            )
+        }
+        val initialTracks = remember { environment.database.listTracks() }
+        queueStore.replace(initialTracks)
+        ZemerDesktopApp(
+            environment = environment,
+            player = player,
+            initialTracks = initialTracks,
+            queueStore = queueStore
+        )
     }
 }
 
 @Composable
 private fun ZemerDesktopApp(
     environment: DesktopAppEnvironment,
-    initialTracks: List<DesktopTrack>
+    player: DesktopPlayerController,
+    initialTracks: List<DesktopTrack>,
+    queueStore: DesktopQueueStore
 ) {
     val colorScheme = darkColorScheme(
         primary = Color(0xFFFB4F69),
@@ -80,12 +91,9 @@ private fun ZemerDesktopApp(
         var searchText by remember { mutableStateOf("") }
         var showSettings by remember { mutableStateOf(false) }
         var trackList by remember { mutableStateOf(initialTracks) }
-
-        val playback = remember { environment.playback }
-        var playing by remember { mutableStateOf(playback.isPlaying) }
+        var playing by remember { mutableStateOf(false) }
         val settings = remember { environment.settings }
-        val defaultAutoplay = settings.getBoolean("autoplay", true)
-        var autoplay by remember { mutableStateOf(defaultAutoplay) }
+        var autoplay by remember { mutableStateOf(settings.getBoolean("autoplay", true)) }
 
         val filteredTracks = remember(searchText, trackList) {
             if (searchText.isBlank()) trackList else trackList.filter {
@@ -93,6 +101,8 @@ private fun ZemerDesktopApp(
                     || it.artist.contains(searchText, ignoreCase = true)
             }
         }
+
+        val queue = remember { queueStore.currentQueue() }
 
         Scaffold(
             bottomBar = {
@@ -132,29 +142,29 @@ private fun ZemerDesktopApp(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Zemer",
-                    style = MaterialTheme.typography.headlineMedium
-                )
+                Text(text = "Zemer", style = MaterialTheme.typography.headlineMedium)
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = {
                         val item = filteredTracks.firstOrNull()
                         if (item != null) {
-                            playback.play(item.audioUrl.ifBlank { "https://example.com/sample.mp3" })
+                            player.playTrack(item)
                             playing = true
                         }
                     }) {
-                        Text(if (playing) "Playing" else "Play")
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = null)
+                            Text(if (playing) "Now playing" else "Play")
+                        }
                     }
                     Button(onClick = {
-                        playback.pause()
+                        player.pause()
                         playing = false
                     }) {
                         Text("Pause")
                     }
                     Button(onClick = {
-                        playback.stop()
+                        player.stop()
                         playing = false
                     }) {
                         Text("Stop")
@@ -193,7 +203,7 @@ private fun ZemerDesktopApp(
                 when (selectedTab) {
                     "Home" -> HomeContent(filteredTracks)
                     "Search" -> SearchContent(filteredTracks)
-                    "Library" -> LibraryContent(trackList)
+                    "Library" -> LibraryContent(queue)
                 }
             }
         }
@@ -224,7 +234,7 @@ private fun DesktopSettingsCard(
                     Text(if (autoplay) "On" else "Off")
                 }
             }
-            Text("Desktop runtime: local SQLite database + ffmpeg playback launcher", style = MaterialTheme.typography.bodyMedium)
+            Text("Desktop runtime: local SQLite library + ffmpeg playback", style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -232,42 +242,35 @@ private fun DesktopSettingsCard(
 @Composable
 private fun HomeContent(tracks: List<DesktopTrack>) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item {
-            SpotlightCard()
-        }
-        items(tracks) { track ->
-            MusicRow(track)
-        }
+        item { SpotlightCard() }
+        items(tracks) { track -> MusicRow(track) }
     }
 }
 
 @Composable
 private fun SearchContent(tracks: List<DesktopTrack>) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        items(tracks) { track ->
-            MusicRow(track)
-        }
+        items(tracks) { track -> MusicRow(track) }
     }
 }
 
 @Composable
-private fun LibraryContent(tracks: List<DesktopTrack>) {
-    val userLibraries = listOf("Favorites", "Recently Played", "Downloads", "Playlists")
+private fun LibraryContent(queue: List<DesktopTrack>) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        items(userLibraries) { library ->
+        items(queue) { track ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().height(64.dp),
-                    contentAlignment = Alignment.CenterStart
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
                 ) {
-                    Text(
-                        text = library,
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                    Text(track.title, style = MaterialTheme.typography.titleMedium)
+                    Text(track.artist, style = MaterialTheme.typography.bodyMedium)
+                    Text(track.mood, style = MaterialTheme.typography.labelMedium)
                 }
             }
         }
@@ -298,12 +301,17 @@ private fun MusicRow(track: DesktopTrack) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Box(
-                modifier = Modifier.width(52.dp).height(52.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+                modifier = Modifier
+                    .width(52.dp)
+                    .height(52.dp)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(track.title, style = MaterialTheme.typography.titleMedium)
