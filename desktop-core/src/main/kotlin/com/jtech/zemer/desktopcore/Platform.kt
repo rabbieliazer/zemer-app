@@ -1,5 +1,7 @@
 package com.jtech.zemer.desktopcore
 
+import java.io.File
+
 interface PlaybackBackend {
     fun play(url: String)
     fun pause()
@@ -12,6 +14,6 @@ interface StorageBackend {
     fun readFile(path: String): ByteArray?
 }
 
-fun getDefaultPlayback(): PlaybackBackend = DesktopPlaybackStub()
+fun getDefaultPlayback(): PlaybackBackend = FfmpegPlaybackBackend()
 
 fun getDefaultStorage(): StorageBackend = DesktopStorageStub()
