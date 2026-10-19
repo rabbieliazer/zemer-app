@@ -7,7 +7,11 @@ class DesktopAppEnvironment(private val baseDir: File = File(System.getProperty(
     val settings = DesktopSettingsStore(File(baseDir, "settings.properties"))
     val playback: PlaybackBackend = FfmpegPlaybackBackend()
     val storage: StorageBackend = DesktopStorageStub()
-    val resolver: StreamingResolver = DesktopStreamingResolverImpl(File("."))
+    val resolverChain: List<StreamingResolver> = listOf(
+        DesktopFullResolver(File(".")),
+        DesktopStreamingResolverImpl(File(".")),
+        DesktopNoopResolver(File("."))
+    )
     val playableUrlProvider: PlayableUrlProvider = FileBackedPlayableUrlProvider(File("."))
 
     init {
